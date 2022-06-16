@@ -1,52 +1,50 @@
 ! A synthetic example using cases.  This is mostly use to test
 ! that the parser is handling the cases=... option correctly.
 
-module Cases_mod
-   use pfunit_mod
+module test_cases
+   use pfunit
    implicit none
 
-   @testParameter(constructor=newMyParam)
+   @testParameter
    type, extends (AbstractTestParameter) :: MyParamType
       integer :: i
    contains
       procedure :: toString
    end type MyParamType
 
-   @testCase(constructor=newMyTestCase)
+   @testCase(testParameters={getParameters()}, constructor=newMyTestCase)
    type, extends (ParameterizedTestCase) :: MyTestCase
-      integer :: i
+      type(MyParamType) :: param
    end type MyTestCase
 
 contains
-
-   function newMyParam(i) result(param)
-      type (MyParamType) :: param
-      integer, intent(in) :: i
-      param%i = i
-
-   end function newMyParam
 
    function newMyTestCase(param)
       type (MyTestCase) :: newMyTestCase
       type (MyParamType) :: param
 
-      newMyTestCase%i = param%i
+      newMyTestCase%param = param
 
    end function newMyTestCase
 
-   @test(cases = [3,5,7])
+   @test
    subroutine test_odd(this)
       class  (MyTestCase), intent(inout) :: this
 
-      @assertEqual(1,mod(this%i,2))
+      @assertEqual(1,mod(this%param%i,2))
 
    end subroutine test_odd
 
-   @test(cases = [2,4,6])
+   function getParameters() result(params)
+     type(MyParamType), allocatable :: params(:)
+     params = [MyParamType(3),MyParamType(5),MyParamType(7)]
+   end function getParameters
+
+   @test
    subroutine test_even(this)
       class  (MyTestCase), intent(inout) :: this
 
-      @assertEqual(0, mod(this%i,2))
+      @assertEqual(0, mod(this%param%i,2))
 
    end subroutine test_even
 
@@ -59,4 +57,4 @@ contains
       string = str
    end function toString
 
-end module Cases_mod
+end module test_cases
